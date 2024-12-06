@@ -8,8 +8,8 @@ cfg_scale: 3.5
 weight_dtype: bf16
 enable_xformers_memory_efficient_attention: true
 
-# model_name_or_path: memoavatar/memo
-model_name_or_path: checkpoints
+model_name_or_path: memoavatar/memo
+# model_name_or_path: checkpoints
 vae: stabilityai/sd-vae-ft-mse
 wav2vec: facebook/wav2vec2-base-960h
 emotion2vec: iic/emotion2vec_plus_large

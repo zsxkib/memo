@@ -57,7 +57,7 @@ def preprocess_image(face_analysis_model: str, image_path: str, image_size: int 
     # Define the image transformation
     transform = transforms.Compose(
         [
-            transforms.Resize(image_size),
+            transforms.Resize((image_size, image_size)),
             transforms.ToTensor(),
             transforms.Normalize([0.5], [0.5]),
         ]
