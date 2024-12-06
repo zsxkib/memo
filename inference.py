@@ -68,7 +68,7 @@ def main():
         for model in [
             "1k3d68.onnx",
             "2d106det.onnx",
-            "face_landmarker_v2_with_blendskapes.task",
+            "face_landmarker_v2_with_blendshapes.task",
             "genderage.onnx",
             "glintr100.onnx",
             "scrfd_10g_bnkps.onnx",
