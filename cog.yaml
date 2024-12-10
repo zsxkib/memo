@@ -1,0 +1,59 @@
+# Configuration for Cog ⚙️
+# Reference: https://cog.run/yaml
+
+build:
+  # set to true if your model requires a GPU
+  gpu: true
+
+  # a list of ubuntu apt packages to install
+  system_packages:
+    - "ffmpeg"
+    - "libglib2.0-0"
+    - "libgl1"
+    - "libsm6"
+    - "libxext6"
+    - "libxrender1"
+
+  # python version in the form '3.11' or '3.11.4'
+  python_version: "3.11"
+
+  # a list of packages in the format <package-name>==<version>
+  python_packages:
+    - "accelerate==1.1.1"
+    - "albumentations==1.4.21"
+    - "audio-separator==0.24.1"
+    - "black==23.12.1"
+    - "diffusers==0.31.0"
+    - "einops==0.8.0"
+    - "ffmpeg-python==0.2.0"
+    - "funasr==1.0.27"
+    - "huggingface-hub==0.26.2"
+    - "imageio==2.36.0"
+    - "imageio-ffmpeg==0.5.1"
+    - "insightface==0.7.3"
+    - "hydra-core==1.3.2"
+    - "jax==0.4.35"
+    - "mediapipe==0.10.18"
+    - "modelscope==1.20.1"
+    - "moviepy==1.0.3"
+    - "numpy==1.26.4"
+    - "omegaconf==2.3.0"
+    - "onnxruntime-gpu>=1.20.1"
+    - "opencv-python-headless==4.10.0.84"
+    - "pillow>=10.4.0"
+    - "scikit-learn>=1.5.2"
+    - "scipy>=1.14.1"
+    - "torch==2.5.1"
+    - "torchaudio==2.5.1"
+    - "torchvision==0.20.1"
+    - "transformers==4.46.3"
+    - "tqdm>=4.67.1"
+    - "xformers==0.0.28.post3"
+
+  # commands run after the environment is setup
+  run:
+    - apt-get update && apt-get install -y ffmpeg libgl1
+    - curl -o /usr/local/bin/pget -L "https://github.com/replicate/pget/releases/download/v0.8.2/pget_linux_x86_64" && chmod +x /usr/local/bin/pget
+
+# predict.py defines how predictions are run on your model
+predict: "predict.py:Predictor"
