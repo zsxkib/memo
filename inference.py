@@ -73,11 +73,18 @@ def main():
             "glintr100.onnx",
             "scrfd_10g_bnkps.onnx",
         ]:
-            if not os.path.exists(os.path.join(face_analysis, model)):
-                logger.info(f"Downloading {model} to {face_analysis}")
+            model_path = os.path.join(face_analysis, 'models', model)
+            if not os.path.exists(model_path):
+                logger.info(f"Downloading {model} to {face_analysis}/models")
                 os.system(
-                    f"wget -P {face_analysis} https://huggingface.co/memoavatar/memo/raw/main/misc/face_analysis/models/{model}"
+                    f"wget -P {face_analysis}/models https://huggingface.co/memoavatar/memo/resolve/main/misc/face_analysis/models/{model}"
                 )
+                # Check if the download was successful
+                if not os.path.exists(model_path):
+                    raise RuntimeError(f"Failed to download {model} to {model_path}")
+                # File size check
+                if os.path.getsize(model_path) < 1024 * 1024:
+                    raise RuntimeError(f"{model_path} file seems incorrect (too small), delete it and retry.")
         logger.info(f"Use face analysis models from {face_analysis}")
 
         vocal_separator = os.path.join(config.misc_model_dir, "misc/vocal_separator/Kim_Vocal_2.onnx")
@@ -87,7 +94,7 @@ def main():
             logger.info(f"Downloading vocal separator to {vocal_separator}")
             os.makedirs(os.path.dirname(vocal_separator), exist_ok=True)
             os.system(
-                f"wget -P {os.path.dirname(vocal_separator)} https://huggingface.co/memoavatar/memo/raw/main/misc/vocal_separator/Kim_Vocal_2.onnx"
+                f"wget -P {os.path.dirname(vocal_separator)} https://huggingface.co/memoavatar/memo/resolve/main/misc/vocal_separator/Kim_Vocal_2.onnx"
             )
     else:
         logger.info(f"Loading manually specified model path: {config.model_name_or_path}")
