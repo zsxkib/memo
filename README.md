@@ -71,3 +71,7 @@ If you find our work useful, please use the following citation:
   year={2024}
 }
 ```
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=memoavatar/memo&type=Timeline)](https://star-history.com/#memoavatar/memo&Timeline)
