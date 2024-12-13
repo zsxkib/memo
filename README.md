@@ -70,6 +70,6 @@ If you find our work useful, please use the following citation:
 
 <div align="center">
     <a href="https://star-history.com/#memoavatar/memo&Timeline">
-        <img src="https://api.star-history.com/svg?repos=memoavatar/memo&type=Timeline" alt="Star History Chart" style="max-width: 50%; height: auto;">
+        <img src="https://api.star-history.com/svg?repos=memoavatar/memo&type=Timeline" alt="Star History Chart" width="50%">
     </a>
 </div>
