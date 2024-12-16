@@ -60,7 +60,7 @@ If you find our work useful, please use the following citation:
 ```bibtex
 @article{zheng2024memo,
   title={MEMO: Memory-Guided Diffusion for Expressive Talking Video Generation},
-  author={Longtao Zheng and Yifan Zhang and Hanzhong Guo and Jiachun Pan and Zhenxiong Tan and Jiahao Lu and Chuanxin Tang and Bo An and Shuicheng Yan},
+  author={Zheng, Longtao and Zhang, Yifan and Guo, Hanzhong and Pan, Jiachun and Tan, Zhenxiong and Lu, Jiahao and Tang, Chuanxin and An, Bo and Yan, Shuicheng},
   journal={arXiv preprint arXiv:2412.04448},
   year={2024}
 }
@@ -70,6 +70,6 @@ If you find our work useful, please use the following citation:
 
 <div align="center">
     <a href="https://star-history.com/#memoavatar/memo&Timeline">
-        <img src="https://api.star-history.com/svg?repos=memoavatar/memo&type=Timeline" alt="Star History Chart" width="50%">
+        <img src="https://api.star-history.com/svg?repos=memoavatar/memo&type=Timeline" alt="Star History Chart" width="60%">
     </a>
 </div>
