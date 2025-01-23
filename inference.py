@@ -243,6 +243,7 @@ def main():
             num_inference_steps=config.inference_steps,
             guidance_scale=config.cfg_scale,
             generator=generator,
+            is_new_audio=t == 0,
         )
 
         video_frames.append(pipeline_output.videos)
