@@ -144,26 +144,6 @@ class MEMOModel(nn.Module):
         return model_pred
 
 
-def get_attention_mask(mask: torch.Tensor, weight_dtype: torch.dtype) -> torch.Tensor:
-    """
-    Rearrange the mask tensors to the required format.
-
-    Args:
-        mask (torch.Tensor): The input mask tensor.
-        weight_dtype (torch.dtype): The data type for the mask tensor.
-
-    Returns:
-        torch.Tensor: The rearranged mask tensor.
-    """
-    if isinstance(mask, list):
-        _mask = []
-        for m in mask:
-            _mask.append(rearrange(m, "b f 1 h w -> (b f) (h w)").to(weight_dtype))
-        return _mask
-    mask = rearrange(mask, "b f 1 h w -> (b f) (h w)").to(weight_dtype)
-    return mask
-
-
 def main():
     accelerator_project_config = ProjectConfiguration(
         project_dir=config.output_dir, logging_dir=os.path.join(config.output_dir, "logs")

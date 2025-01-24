@@ -66,7 +66,13 @@ data
     └── ...
 ```
 
-We preprocess all audio embeddings, face embeddings, and emotion embeddings in advance to accelerate the training process. To preprocess the data, run the following command:
+We also provide an efficient script for calculating video durations:
+
+```bash
+python scripts/calculate_durations.py data/video
+```
+
+We preprocess all audio embeddings, face embeddings, and emotion labels in advance to accelerate the training process. To preprocess the data, run the following command:
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 python scripts/prepare_data.py --input_dir data/video --output_dir data/embedding --misc_model_dir checkpoints
