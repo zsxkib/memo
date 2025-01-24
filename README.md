@@ -45,6 +45,62 @@ python inference.py --config configs/inference.yaml --input_image assets/example
 
 > We tested the code on H100 and RTX 4090 GPUs using CUDA 12. Under the default settings (fps=30, inference_steps=20), the inference time is around 1 second per frame on H100 and 2 seconds per frame on RTX 4090. We welcome community contributions to improve the inference speed or add more features.
 
+## Finetuning Our Model
+
+We provide a straightforward finetuning script for users to continue training on their own datasets.
+
+### Step 1: Data Preparation
+
+Install the dependencies for data preprocessing and finetuning:
+
+```bash
+pip install deepspeed decord wandb
+```
+
+Your training data should be in the form of video clips. The data should be organized as follows:
+
+```plaintext
+data
+└── video
+    ├── *.mp4
+    └── ...
+```
+
+We preprocess all audio embeddings, face embeddings, and emotion embeddings in advance to accelerate the training process. To preprocess the data, run the following command:
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python scripts/prepare_data.py --input_dir data/video --output_dir data/embedding --misc_model_dir checkpoints
+```
+
+The preprocessed embedding will be saved in the `data/embedding` directory:
+
+```plaintext
+data
+├── video
+    ├── *.mp4
+    └── ...
+└── embedding
+    ├── audio_emb
+    ├── audio_emotion
+    ├── face_emb
+    ├── vocals
+    └── metadata.jsonl
+```
+
+### Step 2: Finetuning
+
+Run the finetuning script:
+
+```bash
+accelerate launch --config_file configs/accelerate.yaml finetune.py --config configs/finetune.yaml --exp_name finetune 2>&1 | tee outputs_finetune.log
+```
+
+To inference the finetuned model, simply replace the `model_name_or_path` in `configs/inference.yaml` with the path to the finetuned model (e.g., `outputs/finetune/checkpoint-10000`).
+
+```bash
+python inference.py --config configs/inference.yaml --input_image assets/examples/dicaprio.jpg --input_audio assets/examples/speech.wav --output_dir outputs
+```
+
 ## Acknowledgement
 
 Our work is made possible thanks to high-quality open-source talking video datasets (including [HDTF](https://github.com/MRzzm/HDTF), [VFHQ](https://liangbinxie.github.io/projects/vfhq), [CelebV-HQ](https://celebv-hq.github.io), [MultiTalk](https://multi-talk.github.io), and [MEAD](https://wywu.github.io/projects/MEAD/MEAD.html)) and some pioneering works (such as [EMO](https://humanaigc.github.io/emote-portrait-alive) and [Hallo](https://github.com/fudan-generative-vision/hallo)).

@@ -57,49 +57,40 @@ def main():
     logger.info(f"Loading config from {args.config}")
     config = OmegaConf.load(args.config)
 
-    # Determine model paths
-    if config.model_name_or_path == "memoavatar/memo":
-        logger.info(
-            f"The MEMO model will be downloaded from Hugging Face to the default cache directory. The models for face analysis and vocal separation will be downloaded to {config.misc_model_dir}."
-        )
-
-        face_analysis = os.path.join(config.misc_model_dir, "misc/face_analysis")
-        os.makedirs(face_analysis, exist_ok=True)
-        for model in [
-            "1k3d68.onnx",
-            "2d106det.onnx",
-            "face_landmarker_v2_with_blendshapes.task",
-            "genderage.onnx",
-            "glintr100.onnx",
-            "scrfd_10g_bnkps.onnx",
-        ]:
-            model_path = os.path.join(face_analysis, 'models', model)
-            if not os.path.exists(model_path):
-                logger.info(f"Downloading {model} to {face_analysis}/models")
-                os.system(
-                    f"wget -P {face_analysis}/models https://huggingface.co/memoavatar/memo/resolve/main/misc/face_analysis/models/{model}"
-                )
-                # Check if the download was successful
-                if not os.path.exists(model_path):
-                    raise RuntimeError(f"Failed to download {model} to {model_path}")
-                # File size check
-                if os.path.getsize(model_path) < 1024 * 1024:
-                    raise RuntimeError(f"{model_path} file seems incorrect (too small), delete it and retry.")
-        logger.info(f"Use face analysis models from {face_analysis}")
-
-        vocal_separator = os.path.join(config.misc_model_dir, "misc/vocal_separator/Kim_Vocal_2.onnx")
-        if os.path.exists(vocal_separator):
-            logger.info(f"Vocal separator {vocal_separator} already exists. Skipping download.")
-        else:
-            logger.info(f"Downloading vocal separator to {vocal_separator}")
-            os.makedirs(os.path.dirname(vocal_separator), exist_ok=True)
+    # Download face analysis and vocal separator models, if they do not exist
+    face_analysis = os.path.join(config.misc_model_dir, "misc/face_analysis")
+    os.makedirs(face_analysis, exist_ok=True)
+    for model in [
+        "1k3d68.onnx",
+        "2d106det.onnx",
+        "face_landmarker_v2_with_blendshapes.task",
+        "genderage.onnx",
+        "glintr100.onnx",
+        "scrfd_10g_bnkps.onnx",
+    ]:
+        model_path = os.path.join(face_analysis, "models", model)
+        if not os.path.exists(model_path):
+            logger.info(f"Downloading {model} to {face_analysis}/models")
             os.system(
-                f"wget -P {os.path.dirname(vocal_separator)} https://huggingface.co/memoavatar/memo/resolve/main/misc/vocal_separator/Kim_Vocal_2.onnx"
+                f"wget -P {face_analysis}/models https://huggingface.co/memoavatar/memo/resolve/main/misc/face_analysis/models/{model}"
             )
+            # Check if the download was successful
+            if not os.path.exists(model_path):
+                raise RuntimeError(f"Failed to download {model} to {model_path}")
+            # File size check
+            if os.path.getsize(model_path) < 1024 * 1024:
+                raise RuntimeError(f"{model_path} file seems incorrect (too small), delete it and retry.")
+    logger.info(f"Use face analysis models from {face_analysis}")
+
+    vocal_separator = os.path.join(config.misc_model_dir, "misc/vocal_separator/Kim_Vocal_2.onnx")
+    if os.path.exists(vocal_separator):
+        logger.info(f"Vocal separator {vocal_separator} already exists. Skipping download.")
     else:
-        logger.info(f"Loading manually specified model path: {config.model_name_or_path}")
-        face_analysis = os.path.join(config.model_name_or_path, "misc/face_analysis")
-        vocal_separator = os.path.join(config.model_name_or_path, "misc/vocal_separator/Kim_Vocal_2.onnx")
+        logger.info(f"Downloading vocal separator to {vocal_separator}")
+        os.makedirs(os.path.dirname(vocal_separator), exist_ok=True)
+        os.system(
+            f"wget -P {os.path.dirname(vocal_separator)} https://huggingface.co/memoavatar/memo/resolve/main/misc/vocal_separator/Kim_Vocal_2.onnx"
+        )
 
     # Set up device and weight dtype
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -140,7 +131,7 @@ def main():
 
     logger.info("Processing audio emotion")
     audio_emotion, num_emotion_classes = extract_audio_emotion_labels(
-        model=config.model_name_or_path,
+        model="memoavatar/memo",
         wav_path=input_audio_path,
         emotion2vec_model=config.emotion2vec,
         audio_length=audio_length,

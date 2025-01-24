@@ -1,0 +1,65 @@
+tracker_project_name: memo
+output_dir: outputs
+resume_from_checkpoint: null
+
+model_name_or_path: memoavatar/memo
+vae: stabilityai/sd-vae-ft-mse
+
+gradient_checkpointing: true
+gradient_accumulation_steps: 1
+train_batch_size: 1
+max_train_steps: 20000
+num_train_epochs: -1
+enable_xformers_memory_efficient_attention: true
+checkpoints_total_limit: 20
+
+robust_training: true
+learning_rate: 1e-5
+max_grad_norm: 1.0
+scale_lr: false
+lr_scheduler: constant
+lr_warmup_steps: 0
+
+seed: 42
+mixed_precision: bf16
+use_8bit_adam: false
+allow_tf32: true
+use_ema: false
+adam_beta1: 0.9
+adam_beta2: 0.999
+adam_weight_decay: 0.01
+adam_epsilon: 1e-08
+
+dataloader_num_workers: 16
+prefetch_factor: 4
+checkpointing_steps: 5000
+
+data:
+  width: 512
+  height: 512
+  num_past_frames: 16
+  dynamic_past_frames: false
+  n_sample_frames: 16
+  audio_margin: 2
+  metadata_paths:
+    - data/embedding/metadata.jsonl
+
+weighting_scheme: logit_normal
+logit_mean: 0.0
+logit_std: 1.0 
+mode_scale: 1.29
+
+noise_scheduler_kwargs:
+  num_train_timesteps: 1000
+
+train_reference_net: false
+train_diffusion_net: true
+train_image_proj: false
+train_audio_proj: false
+trainable_modules:  
+  - motion_modules
+  - audio_modules
+
+uncond_img_ratio: 0.05
+uncond_audio_ratio: 0.05
+start_ratio: 0.05
