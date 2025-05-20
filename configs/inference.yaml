@@ -1,7 +1,7 @@
 resolution: 512
 num_generated_frames_per_clip: 16
 fps: 30
-num_init_past_frames: 2
+num_init_past_frames: 16
 num_past_frames: 16
 inference_steps: 20
 cfg_scale: 3.5

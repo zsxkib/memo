@@ -907,11 +907,7 @@ class MemoryLinearAttnProcessor:
                 decayed_motion_frames_value = motion_frames_value * decay_factors
 
                 batch_size, seq_length, _ = decayed_motion_frames_key.shape
-                keys_unsqueezed = decayed_motion_frames_key.unsqueeze(3)
-                values_unsqueezed = decayed_motion_frames_value.unsqueeze(2)
-
-                KV_t_all = keys_unsqueezed * values_unsqueezed
-                KV_cumsum = KV_t_all.sum(dim=1)
+                KV_cumsum = torch.einsum("bij,bik->bjk", decayed_motion_frames_key, decayed_motion_frames_value)
 
                 Z_cumsum = decayed_motion_frames_key.sum(dim=1)
 

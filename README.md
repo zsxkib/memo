@@ -14,10 +14,10 @@
 <br>
 _[Project Page](https://memoavatar.github.io) | [arXiv](https://arxiv.org/abs/2412.04448) | [Model](https://huggingface.co/memoavatar/memo)_
 
-This repository contains the example inference script for the MEMO-preview model. The gif demo below is compressed. See our [project page](https://memoavatar.github.io) for full videos.
+This repository contains the example inference script for the MEMO-preview model. The gif demo below is compressed. See our [project page](https://memoavatar.github.io) for full videos. Also, check out the community contributions, including a [ComfyUI integration](https://github.com/if-ai/ComfyUI-IF_MemoAvatar/tree/main), [Gradio app](https://github.com/camenduru/memo-tost/blob/main/worker_runpod_gradio.py), [demo](https://x.com/camenduru/status/1865102599591976961), and [Jupyter notebook](https://github.com/camenduru/memo-jupyter).
 
-<div style="width: 100%; text-align: center;">
-    <img src="assets/demo.gif" alt="Demo GIF" style="width: 100%; height: auto;">
+<div align="center">
+    <img src="assets/demo.gif" alt="Demo GIF" width="100%">
 </div>
 
 ## Installation
@@ -43,7 +43,69 @@ For example:
 python inference.py --config configs/inference.yaml --input_image assets/examples/dicaprio.jpg --input_audio assets/examples/speech.wav --output_dir outputs
 ```
 
-> We tested the code on H100 and RTX 4090 GPUs using CUDA 12. Under the default settings (fps=30, inference_steps=20), the inference time is around 1 second per frame on H100 and 2 seconds per frame on RTX 4090. We welcome community contributions to improve the inference speed or interfaces like ComfyUI.
+> We tested the code on H100 and RTX 4090 GPUs using CUDA 12. Under the default settings (fps=30, inference_steps=20), the inference time is around 1 second per frame on H100 and 2 seconds per frame on RTX 4090. We welcome community contributions to improve the inference speed or add more features.
+
+## Finetuning Our Model
+
+We provide a straightforward finetuning script for users to continue training on their own datasets.
+
+### Step 1: Data Preparation
+
+Install the dependencies for data preprocessing and finetuning:
+
+```bash
+pip install deepspeed decord wandb
+```
+
+Your training data should be in the form of video clips. The data should be organized as follows:
+
+```plaintext
+data
+└── video
+    ├── *.mp4
+    └── ...
+```
+
+We also provide an efficient script for calculating video durations:
+
+```bash
+python scripts/calculate_durations.py data/video
+```
+
+We preprocess all audio embeddings, face embeddings, and emotion labels in advance to accelerate the training process. To preprocess the data, run the following command:
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python scripts/prepare_data.py --input_dir data/video --output_dir data/embedding --misc_model_dir checkpoints
+```
+
+The preprocessed embedding will be saved in the `data/embedding` directory:
+
+```plaintext
+data
+├── video
+    ├── *.mp4
+    └── ...
+└── embedding
+    ├── audio_emb
+    ├── audio_emotion
+    ├── face_emb
+    ├── vocals
+    └── metadata.jsonl
+```
+
+### Step 2: Finetuning
+
+Run the finetuning script:
+
+```bash
+accelerate launch --config_file configs/accelerate.yaml finetune.py --config configs/finetune.yaml --exp_name finetune 2>&1 | tee outputs_finetune.log
+```
+
+To inference the finetuned model, simply replace the `model_name_or_path` in `configs/inference.yaml` with the path to the finetuned model (e.g., `outputs/finetune/checkpoint-10000`).
+
+```bash
+python inference.py --config configs/inference.yaml --input_image assets/examples/dicaprio.jpg --input_audio assets/examples/speech.wav --output_dir outputs
+```
 
 ## Acknowledgement
 
@@ -51,13 +113,7 @@ Our work is made possible thanks to high-quality open-source talking video datas
 
 ## Ethics Statement
 
-We acknowledge the potential of AI in generating talking videos, with applications spanning education, virtual assistants, and entertainment. However, we are equally aware of the ethical, legal, and societal challenges that misuse of this technology could pose. 
-
-To reduce potential risks, we have only open-sourced a preview model for research purposes. Demos on our website use publicly available materials. We welcome copyright concerns—please contact us if needed, and we will address issues promptly. Users are required to ensure that their actions align with legal regulations, cultural norms, and ethical standards. 
-
-It is strictly prohibited to use the model for creating malicious, misleading, defamatory, or privacy-infringing content, such as deepfake videos for political misinformation, impersonation, harassment, or fraud. We strongly encourage users to review generated content carefully, ensuring it meets ethical guidelines and respects the rights of all parties involved. Users must also ensure that their inputs (e.g., audio and reference images) and outputs are used with proper authorization. Unauthorized use of third-party intellectual property is strictly forbidden. 
-
-While users may claim ownership of content generated by the model, they must ensure compliance with copyright laws, particularly when involving public figures' likeness, voice, or other aspects protected under personality rights.
+We acknowledge the potential of AI in generating talking videos, with applications spanning education, virtual assistants, and entertainment. However, we are equally aware of the ethical, legal, and societal challenges that misuse of this technology could pose. To reduce potential risks, we have only open-sourced a preview model for research purposes. Demos on our website use publicly available materials. We welcome copyright concerns—please contact us if needed, and we will address issues promptly. Users are required to ensure that their actions align with legal regulations, cultural norms, and ethical standards. It is strictly prohibited to use the model for creating malicious, misleading, defamatory, or privacy-infringing content, such as deepfake videos for political misinformation, impersonation, harassment, or fraud. We strongly encourage users to review generated content carefully, ensuring it meets ethical guidelines and respects the rights of all parties involved. Users must also ensure that their inputs (e.g., audio and reference images) and outputs are used with proper authorization. Unauthorized use of third-party intellectual property is strictly forbidden. While users may claim ownership of content generated by the model, they must ensure compliance with copyright laws, particularly when involving public figures' likeness, voice, or other aspects protected under personality rights.
 
 ## Citation
 
@@ -66,7 +122,7 @@ If you find our work useful, please use the following citation:
 ```bibtex
 @article{zheng2024memo,
   title={MEMO: Memory-Guided Diffusion for Expressive Talking Video Generation},
-  author={Longtao Zheng and Yifan Zhang and Hanzhong Guo and Jiachun Pan and Zhenxiong Tan and Jiahao Lu and Chuanxin Tang and Bo An and Shuicheng Yan},
+  author={Zheng, Longtao and Zhang, Yifan and Guo, Hanzhong and Pan, Jiachun and Tan, Zhenxiong and Lu, Jiahao and Tang, Chuanxin and An, Bo and Yan, Shuicheng},
   journal={arXiv preprint arXiv:2412.04448},
   year={2024}
 }
@@ -74,4 +130,8 @@ If you find our work useful, please use the following citation:
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=memoavatar/memo&type=Timeline)](https://star-history.com/#memoavatar/memo&Timeline)
+<div align="center">
+    <a href="https://star-history.com/#memoavatar/memo&Timeline">
+        <img src="https://api.star-history.com/svg?repos=memoavatar/memo&type=Timeline" alt="Star History Chart" width="60%">
+    </a>
+</div>

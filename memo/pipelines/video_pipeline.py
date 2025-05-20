@@ -154,6 +154,7 @@ class VideoPipeline(DiffusionPipeline):
         generator: Optional[Union[torch.Generator, List[torch.Generator]]] = None,
         output_type: Optional[str] = "tensor",
         return_dict: bool = True,
+        is_new_audio: bool = True,
         callback: Optional[Callable[[int, int, torch.FloatTensor], None]] = None,
         callback_steps: Optional[int] = 1,
     ):
@@ -265,6 +266,8 @@ class VideoPipeline(DiffusionPipeline):
                     audio_embedding=audio_tensor,
                     audio_emotion=audio_emotion,
                     uc_mask=uc_mask,
+                    is_new_audio=is_new_audio,
+                    update_past_memory=i == 0,
                 ).sample
 
                 # perform guidance
