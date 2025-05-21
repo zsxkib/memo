@@ -60,6 +60,11 @@ class Predictor(BasePredictor):
         """Load the models into memory once at startup."""
         os.makedirs(MODEL_CACHE, exist_ok=True)
 
+        # Enable CUDNN benchmarking for potentially faster convolutions
+        if torch.cuda.is_available():
+            torch.backends.cudnn.benchmark = True
+            print("[+] torch.backends.cudnn.benchmark = True")
+
         model_files = [
             "audio_proj.tar",
             "diffusion_net.tar",
@@ -90,7 +95,10 @@ class Predictor(BasePredictor):
                 MODEL_CACHE, subfolder="reference_net", use_safetensors=True
             )
             self.diffusion_net = UNet3DConditionModel.from_pretrained(
-                MODEL_CACHE, subfolder="diffusion_net", use_safetensors=True
+                MODEL_CACHE, 
+                subfolder="diffusion_net", 
+                use_safetensors=True,
+                motion_max_position_embeddings=128 # Set to max possible num_generated_frames_per_clip
             )
             self.image_proj = ImageProjModel.from_pretrained(
                 MODEL_CACHE, subfolder="image_proj", use_safetensors=True
@@ -98,6 +106,13 @@ class Predictor(BasePredictor):
             self.audio_proj = AudioProjModel.from_pretrained(
                 MODEL_CACHE, subfolder="audio_proj", use_safetensors=True
             )
+
+            # Move models to device and set precision first
+            self.vae = self.vae.to(device=self.device, dtype=self.weight_dtype)
+            self.reference_net = self.reference_net.to(device=self.device, dtype=self.weight_dtype)
+            self.diffusion_net = self.diffusion_net.to(device=self.device, dtype=self.weight_dtype)
+            self.image_proj = self.image_proj.to(device=self.device, dtype=self.weight_dtype)
+            self.audio_proj = self.audio_proj.to(device=self.device, dtype=self.weight_dtype)
 
             self.vae.requires_grad_(False).eval()
             self.reference_net.requires_grad_(False).eval()
@@ -127,49 +142,50 @@ class Predictor(BasePredictor):
         audio.export(output_path, format="wav")
         return output_path
 
+    @torch.inference_mode()
     def predict(
         self,
         image: Path = Input(description="Input image (e.g. PNG/JPG)."),
         audio: Path = Input(description="Input audio (e.g. WAV/MP3)."),
         resolution: int = Input(
-            description="Resolution for generation (square). Default: 512",
+            description="Resolution for generation (square)",
             default=512,
             ge=64,
             le=2048,
         ),
         fps: int = Input(
-            description="Frames per second of output video. Default: 30",
+            description="Frames per second of output video",
             default=30,
             ge=1,
             le=60,
         ),
         num_generated_frames_per_clip: int = Input(
-            description="Frames per video clip chunk. Default: 16",
+            description="Frames per video clip chunk (max with current PE weights)",
             default=16,
             ge=1,
-            le=128,
+            le=128, # Max theoretical is 128 due to motion_max_position_embeddings
         ),
         inference_steps: int = Input(
-            description="Diffusion inference steps. Default: 20",
+            description="Diffusion inference steps",
             default=20,
             ge=1,
             le=200,
         ),
         cfg_scale: float = Input(
-            description="Classifier-free guidance scale. Default: 3.5",
+            description="Classifier-free guidance scale",
             default=3.5,
             ge=1.0,
             le=20.0,
         ),
         max_audio_seconds: int = Input(
-            description="Max audio duration (in seconds). Default: 8",
+            description="Max audio duration (in seconds)",
             default=8,
             ge=1,
             le=60,
         ),
-        seed: int = Input(
+        seed: Optional[int] = Input(
             description="Set a random seed (None or 0 for random)",
-            default=0,
+            default=None,
         ),
     ) -> Path:
         # Handle seed
@@ -234,9 +250,10 @@ class Predictor(BasePredictor):
                 )
                 pixel_values_ref_img = torch.cat([pixel_values, past_frames], dim=0)
             else:
-                past_frames = video_frames[-1][0].permute(1, 0, 2, 3)
-                past_frames = past_frames[-num_past_frames:]
-                past_frames = past_frames * 2.0 - 1.0
+                past_frames = video_frames[-1][0]  # Get the last generated clip
+                past_frames = past_frames.permute(1, 0, 2, 3)  # (num_frames, C, H, W)
+                past_frames = past_frames[-num_past_frames:] # Select the last num_past_frames
+                past_frames = past_frames * 2.0 - 1.0 # Denormalize if necessary, assuming it's [0,1]
                 past_frames = past_frames.to(
                     dtype=pixel_values.dtype, device=pixel_values.device
                 )
@@ -246,8 +263,9 @@ class Predictor(BasePredictor):
             audio_tensor = (
                 audio_emb[
                     t
-                    * num_generated_frames_per_clip : (t + 1)
-                    * num_generated_frames_per_clip
+                    * num_generated_frames_per_clip : min(
+                        (t + 1) * num_generated_frames_per_clip, audio_emb.shape[0]
+                    )
                 ]
                 .unsqueeze(0)
                 .to(self.audio_proj.device, dtype=self.audio_proj.dtype)
@@ -255,8 +273,9 @@ class Predictor(BasePredictor):
             audio_tensor = self.audio_proj(audio_tensor)
             audio_emotion_tensor = audio_emotion[
                 t
-                * num_generated_frames_per_clip : (t + 1)
-                * num_generated_frames_per_clip
+                * num_generated_frames_per_clip : min(
+                    (t + 1) * num_generated_frames_per_clip, audio_emotion.shape[0]
+                )
             ]
 
             pipeline_output = self.pipeline(
